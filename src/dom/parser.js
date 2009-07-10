@@ -1142,8 +1142,26 @@ function __escapeXML__(str) {
             replace(escGtRegEx, "&gt;").
             replace(quotRegEx, "&quot;").
             replace(aposRegEx, "&apos;");
+    
+    // escape non-ASCII characters (just to save on unicode encoding nightmares down the road)
+    var ret = "";
+    var asciiStart = 0;
+    for (var i = 0; i < str.length; i++) {
+    	if (str.charCodeAt(i) > 127) {
+    		// deal with ASCII characters seen thus far
+    		ret = ret + str.substring(asciiStart, i);
+    		asciiStart = i + 1;
+    		
+    		var hexString = str.charCodeAt(i).toString(16).toUpperCase();
+    		while (hexString.length < 4) {
+    			hexString = "0" + hexString;
+    		}
+    		ret = ret + "&#x" + hexString + ";";
+    	}
+    }
+    ret = ret + str.substring(asciiStart, str.length);
 
-    return str;
+    return ret;
 };
 
 /**
@@ -1157,8 +1175,11 @@ var unescLtRegEx = /&lt;/g;
 var unescGtRegEx = /&gt;/g;
 var unquotRegEx = /&quot;/g;
 var unaposRegEx = /&apos;/g;
+var unicodeRegEx = /&#x([0-9a-fA-F]{4});/g;
 function __unescapeXML__(str) {
-    str = str.replace(unescAmpRegEx, "&").
+	var unicodeFn = function(whole, match) { return String.fromCharCode(parseInt(match, 16)); };
+    str = str.replace(unicodeRegEx, unicodeFn).
+    		replace(unescAmpRegEx, "&").
             replace(unescLtRegEx, "<").
             replace(unescGtRegEx, ">").
             replace(unquotRegEx, "\"").
