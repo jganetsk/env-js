@@ -1142,6 +1142,10 @@ function __escapeXML__(str) {
             replace(escGtRegEx, "&gt;").
             replace(quotRegEx, "&quot;").
             replace(aposRegEx, "&apos;");
+
+    if (!$env.forceAsciiXML) {
+        return str;
+    }
     
     // escape non-ASCII characters (just to save on unicode encoding nightmares down the road)
     var ret = "";

@@ -159,5 +159,7 @@ var Envjs = function(){
     };
     
     $env.loadInlineScript = function(script){};
+
+    $env.forceAsciiXML = false;
     
 })(Envjs);
