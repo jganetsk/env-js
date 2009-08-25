@@ -59,24 +59,29 @@ __extend__(HTMLTableElement.prototype, {
     },
  
     appendChild : function (child) {
-
-        var tagName = child.tagName.toLowerCase();
-        if (tagName === "tr") {
-            // need an implcit <tbody> to contain this...
-            if (!this.currentBody) {
-                this.currentBody = document.createElement("tbody");
-            
-                DOMNode.prototype.appendChild.apply(this, [this.currentBody]);
+        
+        var tagName;
+        if(child.tagName){
+            tagName = child.tagName.toLowerCase();
+            if (tagName === "tr") {
+                // need an implcit <tbody> to contain this...
+                if (!this.currentBody) {
+                    this.currentBody = document.createElement("tbody");
+                
+                    DOMNode.prototype.appendChild.apply(this, [this.currentBody]);
+                }
+              
+                return this.currentBody.appendChild(child); 
+       
+            } else if (tagName === "tbody" || tagName === "tfoot" && this.currentBody) {
+                this.currentBody = child;
+                return DOMNode.prototype.appendChild.apply(this, arguments);  
+                
+            } else {
+                return DOMNode.prototype.appendChild.apply(this, arguments);
             }
-          
-            return this.currentBody.appendChild(child); 
-   
-        } else if (tagName === "tbody" || tagName === "tfoot" && this.currentBody) {
-            this.currentBody = child;
-            return DOMNode.prototype.appendChild.apply(this, arguments);  
-            
-        } else {
-            return DOMNode.prototype.appendChild.apply(this, arguments);
+        }else{
+            $error('HTMLTableElement.appendChild => child.tagName should not be undefined here... Fix ME!');
         }
     },
      

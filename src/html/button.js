@@ -21,12 +21,12 @@ __extend__(HTMLButtonElement.prototype, {
     set accessKey(value){
         this.setAttribute('accesskey',value);
     },
-    get tabIndex(){
+    /*get tabIndex(){
         return Number(this.getAttribute('tabindex'));
     },
     set tabIndex(value){
         this.setAttribute('tabindex',Number(value));
-    },
+    },*/
     get type(){
         return this.getAttribute('type');
     },

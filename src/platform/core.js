@@ -1,3 +1,4 @@
+
 /**
  * @author thatcher
  */
@@ -35,6 +36,8 @@ var Envjs = function(){
     $env.warn   = function(){};
     $env.error  = function(){};
     
+    
+    $env.debugParser = false;
     //uncomment these if you want to get some internal log statementes
     /*$env.debug  = function(msg){
         $env.log(msg,"DEBUG"); 
@@ -92,6 +95,8 @@ var Envjs = function(){
     $env.lang           = ''; 
     $env.platform       = "Rhino ";//how do we get the version
     
+    $env.load = function(){};
+    
     $env.safeScript = function(){
       //do nothing  
     };
@@ -101,6 +106,7 @@ var Envjs = function(){
         "text/envjs"        :true
     };
     
+    $env.onScriptLoadError = function(){};
     $env.loadLocalScript = function(script, parser){
         $env.debug("loading script ");
         var types, type, src, i, base, 
@@ -119,17 +125,25 @@ var Envjs = function(){
                     if($env.scriptTypes[types[i]]){
 						if(script.src){
                             $env.info("loading allowed external script :" + script.src);
-                            if($env.beforeload&&$env.beforeload[script.src]){
-                                //lets you register a function to execute 
-                                //before the script is loaded
-                                $env.beforeload[script.src]();
+                            //lets you register a function to execute 
+                            //before the script is loaded
+                            if($env.beforeload){
+                                for(src in $env.beforeload){
+                                    if(script.src.match(src)){
+                                        $env.beforeload[src]();
+                                    }
+                                }
                             }
                             base = "" + window.location;
 							load($env.location(script.src.match(/([^\?#]*)/)[1], base ));
-                            if($env.afterload&&$env.afterload[script.src]){
-                                //lets you register a function to execute 
-                                //after the script is loaded
-                                $env.afterload[script.src]();
+                            //lets you register a function to execute 
+                            //after the script is loaded
+                            if($env.afterload){
+                                for(src in $env.afterload){
+                                    if(script.src.match(src)){
+                                        $env.afterload[src]();
+                                    }
+                                }
                             }
                         }else{
                             $env.loadInlineScript(script);
@@ -148,6 +162,7 @@ var Envjs = function(){
             }
         }catch(e){
             $env.error("Error loading script.", e);
+            $env.onScriptLoadError(script);
         }finally{
             if(parser){
                 parser.appendFragment(docWrites.join(''));
@@ -161,5 +176,77 @@ var Envjs = function(){
     $env.loadInlineScript = function(script){};
 
     $env.forceAsciiXML = false;
+    
+    
+    $env.globalize = function(){};
+    $env.getScope = function(){};
+    $env.setScope = function(){};
+    $env.configureScope = function(){};
+    $env.restoreScope = function(){};
+    $env.loadFrame = function(frame, url){
+        try {
+
+            var frameWindow,
+            	makingNewWinFlag = !(frame._content);
+            if (makingNewWinFlag)
+                // a blank object, inherits from original global
+                // see org.mozilla.javascript.tools.envjs.Window.java
+                frameWindow = $env.globalize();
+            else
+                frameWindow = frame._content;
+
+
+            // define local variables with content of things that are
+            // in current global/window, because when the following
+            // function executes we'll have a new/blank
+            // global/window and won't be able to get at them....
+            var local__window__    = $env.window,
+            	local_env          = $env,
+                local_window       = frame.ownerDocument.parentWindow;
+
+            // a local function gives us something whose scope
+            // is easy to change
+            var __frame__   = function(){
+                if (makingNewWinFlag){
+                    local__window__(frameWindow, 
+                                    local_env,
+                                    local_window,
+                                    local_window.top);
+                }
+
+                frameWindow.location = url;
+            }
+
+
+            // change scope of window object creation
+            //   functions, so that functions/code they create
+            //   will be scoped to new window object
+            // getScope()/setScope() from Window.java
+            var scopes = {
+                frame : $env.getScope(__frame__),
+                window : $env.getScope(local__window__),
+                global_load: $env.getScope(load),
+                local_load: $env.getScope($env.loadLocalScript)
+            };
+
+            $env.setScope(__frame__,             frameWindow);
+            $env.setScope(local__window__,       frameWindow);
+            $env.setScope($env.load,             frameWindow);
+            $env.setScope($env.loadLocalScript,  frameWindow);
+
+            __frame__();
+            frame._content = frameWindow;
+
+            // now restore the scope
+            $env.setScope(__frame__, scopes.frame);
+            $env.setScope(local__window__, scopes.window);
+            $env.setScope($env.load, scopes.global_load);
+            $env.setScope($env.loadLocalScript, scopes.local_load);
+            
+        } catch(e){
+            $env.error("failed to load frame content: from " + url, e);
+        }
+
+    };
     
 })(Envjs);

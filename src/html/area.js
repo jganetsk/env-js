@@ -39,12 +39,12 @@ __extend__(HTMLAreaElement.prototype, {
         //TODO
         return 0;
     },
-    get tabIndex(){
+    /*get tabIndex(){
         return this.getAttribute('tabindex');
     },
     set tabIndex(value){
         this.setAttribute('tabindex',value);
-    },
+    },*/
     get target(){
         return this.getAttribute('target');
     },

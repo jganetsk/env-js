@@ -21,7 +21,7 @@ __extend__(HTMLDocument.prototype, {
 	
 
 
-var $document =  new HTMLDocument($implementation);
+var $document =  new HTMLDocument($implementation, $w);
 $w.__defineGetter__("document", function(){
 	return $document;
 });

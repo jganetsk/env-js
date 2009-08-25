@@ -49,7 +49,7 @@ __extend__(HTMLFormElement.prototype,{
         
     },
 	get name() {
-	    return this.getAttribute("name") || ""; 
+	    return this.getAttribute("name"); 
 	    
     },
 	set name(val) { 
@@ -57,7 +57,7 @@ __extend__(HTMLFormElement.prototype,{
 	    
     },
 	get target() { 
-	    return this.getAttribute("target") || ""; 
+	    return this.getAttribute("target"); 
 	    
     },
 	set target(val) { 

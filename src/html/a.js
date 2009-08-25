@@ -10,7 +10,7 @@ var HTMLAnchorElement = function(ownerDocument) {
 HTMLAnchorElement.prototype = new HTMLElement;
 __extend__(HTMLAnchorElement.prototype, {
 	get accessKey() { 
-	    return this.getAttribute("accesskey") || ""; 
+	    return this.getAttribute("accesskey"); 
 	    
     },
 	set accessKey(val) { 
@@ -18,7 +18,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get charset() { 
-	    return this.getAttribute("charset") || ""; 
+	    return this.getAttribute("charset"); 
 	    
     },
 	set charset(val) { 
@@ -26,7 +26,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get coords() { 
-	    return this.getAttribute("coords") || ""; 
+	    return this.getAttribute("coords"); 
 	    
     },
 	set coords(val) { 
@@ -34,7 +34,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get href() { 
-	    return this.getAttribute("href") || ""; 
+	    return this.getAttribute("href"); 
 	    
     },
 	set href(val) { 
@@ -42,7 +42,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get hreflang() { 
-	    return this.getAttribute("hreflang") || ""; 
+	    return this.getAttribute("hreflang"); 
 	    
     },
 	set hreflang(val) { 
@@ -50,7 +50,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get name() { 
-	    return this.getAttribute("name") || ""; 
+	    return this.getAttribute("name"); 
 	    
     },
 	set name(val) { 
@@ -58,7 +58,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get rel() { 
-	    return this.getAttribute("rel") || ""; 
+	    return this.getAttribute("rel"); 
 	    
     },
 	set rel(val) { 
@@ -66,7 +66,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get rev() { 
-	    return this.getAttribute("rev") || ""; 
+	    return this.getAttribute("rev"); 
 	    
     },
 	set rev(val) { 
@@ -74,23 +74,15 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get shape() { 
-	    return this.getAttribute("shape") || ""; 
+	    return this.getAttribute("shape"); 
 	    
     },
 	set shape(val) { 
 	    return this.setAttribute("shape",val); 
 	    
     },
-	get tabIndex() { 
-	    return this.getAttribute("tabindex") || ""; 
-	    
-    },
-	set tabIndex(val) { 
-	    return this.setAttribute("tabindex",val); 
-	    
-    },
 	get target() { 
-	    return this.getAttribute("target") || ""; 
+	    return this.getAttribute("target"); 
 	    
     },
 	set target(val) { 
@@ -98,7 +90,7 @@ __extend__(HTMLAnchorElement.prototype, {
 	    
     },
 	get type() { 
-	    return this.getAttribute("type") || ""; 
+	    return this.getAttribute("type"); 
 	    
     },
 	set type(val) { 

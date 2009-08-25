@@ -41,7 +41,7 @@ window.$profiler.stats = function(raw){
     };
 };
 
-if(Envjs.profile){
+if($env.profile){
     /**
     *   CSS2Properties
     */

@@ -36,61 +36,39 @@
     
     var timers = [];
 
-    $env.timer = function(fn, interval){
-	this.fn = fn;
-	this.interval = interval;
-	this.at = Date.now() + interval;
-	this.index = timers.length;
-	timers[this.index] = this;
-    };	
-
-    $env.timer.prototype.start = function(){};
-    $env.timer.prototype.stop = function(){
-	delete timers[this.index];
+    //For Java the window.timer is created using the java.lang.Thread in combination
+    //with the java.lang.Runnable
+    $env.timer = function(fn, time){
+       var running = true;
+        
+        var run = sync(function(){ //while happening only thing in this timer    
+    	    //$env.debug("running timed function");
+            fn();
+        });
+        var _this = this;
+        var thread = new java.lang.Thread(new java.lang.Runnable({
+            run: function(){
+                try {
+                    while (running){
+                        java.lang.Thread.currentThread().sleep(time);
+                        run.apply(_this);
+                    }
+                }catch(e){
+                    $env.debug("interuption running timed function");
+                    _this.stop();
+                    $env.onInterrupt();
+                };
+            }
+        }));
+        this.start = function(){ 
+            thread.start(); 
+        };
+        this.stop = sync(function(num){
+            running = false;
+            thread.interrupt();
+        })
     };
-
-    // wait === null: execute any immediately runnable timers and return
-    // wait(n) (n > 0): execute any timers as they fire but no longer than n ms
-    // wait(0): execute any timers as they fire, waiting until there are none left
-    $env.wait = function(wait) {
-	var i;
-	var empty;
-	var after;
-	var now;
-	var timer;
-	var sleep;
-	if (wait !== 0 && wait !== null && wait !== undefined){
-	    wait += Date.now();
-	}
-	for (;;) {
-	    for (i in timers){
-		timer = timers[i];
-		now = Date.now();
-		if (timer.at <= now){
-		    f = timer.fn;
-		    f();
-		    timer.at = Date.now() + timer.interval;
-		}
-	    }
-	    empty = true;
-	    sleep = null;
-	    now = Date.now();
-	    for (i in timers){
-		empty  = false;
-		timer = timers[i];
-		after = timer.at - now
-		sleep = (sleep === null || after < sleep) ? after : sleep;
-	    }
-	    sleep = sleep < 0 ? 0 : sleep;
-	    if (empty || ( wait !== 0 ) && ( ( sleep > 0 && !wait ) || ( Date.now() + sleep > wait ) ) ) {
-		break;
-	    }
-	    if (sleep) {
-		java.lang.Thread.currentThread().sleep(sleep);
-	    }
-	}
-    };
-
+    
     //Since we're running in rhino I guess we can safely assume
     //java is 'enabled'.  I'm sure this requires more thought
     //than I've given it here
@@ -99,11 +77,27 @@
     
     //Used in the XMLHttpRquest implementation to run a
     // request in a seperate thread
+    $env.onInterrupt = function(){};
     $env.runAsync = function(fn){
         $env.debug("running async");
-        (new java.lang.Thread(new java.lang.Runnable({
-            run: fn
-        }))).start();
+        var running = true;
+        
+        var run = sync(function(){ //while happening only thing in this timer    
+    	    //$env.debug("running timed function");
+            fn();
+        });
+        
+        var async = (new java.lang.Thread(new java.lang.Runnable({
+            run: run
+        })));
+        
+        try{
+            async.start();
+        }catch(e){
+            $env.error("error while running async", e);
+            async.interrupt();
+            $env.onInterrupt();
+        }
     };
     
     //Used to write to a local file
@@ -143,14 +137,43 @@
         var url = java.net.URL(xhr.url);//, $w.location);
       var connection;
         if ( /^file\:/.test(url) ) {
-            if ( xhr.method == "PUT" ) {
-                var text =  data || "" ;
-                $env.writeToFile(text, url);
-            } else if ( xhr.method == "DELETE" ) {
-                $env.deleteFile(url);
-            } else {
-                connection = url.openConnection();
-                connection.connect();
+            try{
+                if ( xhr.method == "PUT" ) {
+                    var text =  data || "" ;
+                    $env.writeToFile(text, url);
+                } else if ( xhr.method == "DELETE" ) {
+                    $env.deleteFile(url);
+                } else {
+                    connection = url.openConnection();
+                    connection.connect();
+                    //try to add some canned headers that make sense
+                    
+                    try{
+                        if(xhr.url.match(/html$/)){
+                            xhr.responseHeaders["Content-Type"] = 'text/html';
+                        }else if(xhr.url.match(/.xml$/)){
+                            xhr.responseHeaders["Content-Type"] = 'text/xml';
+                        }else if(xhr.url.match(/.js$/)){
+                            xhr.responseHeaders["Content-Type"] = 'text/javascript';
+                        }else if(xhr.url.match(/.json$/)){
+                            xhr.responseHeaders["Content-Type"] = 'application/json';
+                        }else{
+                            xhr.responseHeaders["Content-Type"] = 'text/plain';
+                        }
+                    //xhr.responseHeaders['Last-Modified'] = connection.getLastModified();
+                    //xhr.responseHeaders['Content-Length'] = headerValue+'';
+                    //xhr.responseHeaders['Date'] = new Date()+'';*/
+                    }catch(e){
+                        $env.error('failed to load response headers',e);
+                    }
+                    	
+                }
+            }catch(e){
+                $env.error('failed to open file '+ url, e);
+                connection = null;
+                xhr.readyState = 4;
+                xhr.statusText = "Local File Protocol Error";
+                xhr.responseText = "<html><head/><body><p>"+ e+ "</p></body></html>";
             }
         } else { 
             connection = url.openConnection();
@@ -176,49 +199,55 @@
 			}
 			
             
-            var respheadlength = connection.getHeaderFields().size();
-            // Stick the response headers into responseHeaders
-            for (var i = 0; i < respheadlength; i++) { 
-                var headerName = connection.getHeaderFieldKey(i); 
-                var headerValue = connection.getHeaderField(i); 
-                if (headerName)
-                    xhr.responseHeaders[headerName+''] = headerValue+'';
-            }
         }
         if(connection){
-                xhr.readyState = 4;
-                xhr.status = parseInt(connection.responseCode,10) || undefined;
-                xhr.statusText = connection.responseMessage || "";
-                
-                var contentEncoding = connection.getContentEncoding() || "utf-8",
-                    baos = new java.io.ByteArrayOutputStream(),
-                    buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
-                    length,
-                    stream = null,
-                    responseXML = null;
-
-                try{
-                    stream = (contentEncoding.equalsIgnoreCase("gzip") || contentEncoding.equalsIgnoreCase("decompress") )?
-                            new java.util.zip.GZIPInputStream(connection.getInputStream()) :
-                            connection.getInputStream();
-                }catch(e){
-                    $env.error('failed to open connection stream \n'+e.toString(), e);
-                    stream = connection.getErrorStream();
+            try{
+                var respheadlength = connection.getHeaderFields().size();
+                // Stick the response headers into responseHeaders
+                for (var i = 0; i < respheadlength; i++) { 
+                    var headerName = connection.getHeaderFieldKey(i); 
+                    var headerValue = connection.getHeaderField(i); 
+                    if (headerName)
+                        xhr.responseHeaders[headerName+''] = headerValue+'';
                 }
-                
-                while ((length = stream.read(buffer)) != -1) {
-                    baos.write(buffer, 0, length);
-                }
+            }catch(e){
+                $env.error('failed to load response headers',e);
+            }
+            
+            xhr.readyState = 4;
+            xhr.status = parseInt(connection.responseCode,10) || undefined;
+            xhr.statusText = connection.responseMessage || "";
+            
+            var contentEncoding = connection.getContentEncoding() || "utf-8",
+                baos = new java.io.ByteArrayOutputStream(),
+                buffer = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024),
+                length,
+                stream = null,
+                responseXML = null;
 
-                baos.close();
-                stream.close();
+            try{
+                stream = (contentEncoding.equalsIgnoreCase("gzip") || contentEncoding.equalsIgnoreCase("decompress") )?
+                        new java.util.zip.GZIPInputStream(connection.getInputStream()) :
+                        connection.getInputStream();
+            }catch(e){
+                $env.error('failed to open connection stream \n'+e.toString(), e);
+                stream = connection.getErrorStream();
+            }
+            
+            while ((length = stream.read(buffer)) != -1) {
+                baos.write(buffer, 0, length);
+            }
 
-                xhr.responseText = java.nio.charset.Charset.forName("UTF-8").
-                    decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString()+"";
+            baos.close();
+            stream.close();
+
+            xhr.responseText = java.nio.charset.Charset.forName("UTF-8").
+                decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString()+"";
                 
         }
         if(responseHandler){
-          responseHandler();
+            $env.debug('calling ajax response handler');
+            responseHandler();
         }
     };
     
@@ -226,27 +255,90 @@
     htmlDocBuilder.setNamespaceAware(false);
     htmlDocBuilder.setValidating(false);
     
-    $env.parseHTML = function(htmlstring){
-        return htmlDocBuilder.newDocumentBuilder().parse(
-                  new java.io.ByteArrayInputStream(
-                        (new java.lang.String(htmlstring)).getBytes("UTF8")))+"";
+    var htmlCleaner,
+        cleanXMLSerializer,
+        cleanerProperties,
+        htmlTransformer,
+        htmlOutputProps;
+    $env.fixHTML = false;
+    $env.cleanHTML = function(xmlString){
+        var htmlString;
+        $env.debug('Cleaning html :\n'+xmlString);
+        if(!htmlCleaner){
+            cleanerProperties = new org.htmlcleaner.CleanerProperties();
+            cleanerProperties.setOmitHtmlEnvelope(true);
+            cleanerProperties.setTranslateSpecialEntities(true);
+            cleanerProperties.setAdvancedXmlEscape(true);
+            cleanerProperties.setUseCdataForScriptAndStyle(false);
+            cleanerProperties.setOmitXmlDeclaration(true);
+            htmlCleaner = new org.htmlcleaner.HtmlCleaner(cleanerProperties);
+            cleanXMLSerializer = new org.htmlcleaner.SimpleXmlSerializer(cleanerProperties);
+            //may have been initialized in $env.xslt
+            /*transformerFactory = transformerFactory||
+                Packages.javax.xml.transform.TransformerFactory.newInstance();
+            htmlTransformer = transformerFactory.newTransformer();
+            htmlOutputProps = new java.util.Properties();
+            htmlOutputProps.put(javax.xml.transform.OutputKeys.METHOD, "xml");
+            htmlOutputProps.put(javax.xml.transform.OutputKeys.INDENT , "no");
+            htmlOutputProps.put(javax.xml.transform.OutputKeys.ENCODING  , "UTF-8");
+            htmlOutputProps.put(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION  , "yes");
+            htmlTransformer.setOutputProperties(htmlOutputProps)*/
+        }
+        
+        /*var node = cleanXMLSerializer.createDOM(htmlCleaner.clean(xmlString)),
+            outText = new java.io.StringWriter();
+        htmlTransformer.transform(
+            new javax.xml.transform.dom.DOMSource(node),
+            new javax.xml.transform.stream.StreamResult(outText));
+            
+        htmlString = outText.toString()+'';*/
+        htmlString = cleanXMLSerializer.getXmlAsString(htmlCleaner.clean(xmlString));
+        //$env.info('Cleaned html :\n'+htmlString);
+        return htmlString;
     };
     
     var xmlDocBuilder = Packages.javax.xml.parsers.DocumentBuilderFactory.newInstance();
     xmlDocBuilder.setNamespaceAware(true);
-    xmlDocBuilder.setValidating(true);
+    xmlDocBuilder.setValidating(false);
     
     $env.parseXML = function(xmlstring){
         return xmlDocBuilder.newDocumentBuilder().parse(
                   new java.io.ByteArrayInputStream(
-                        (new java.lang.String(xmlstring)).getBytes("UTF8")))+"";
+                        (new java.lang.String(xmlstring)).getBytes("UTF8")));
     };
     
     
     $env.xpath = function(expression, doc){
-    return Packages.javax.xml.xpath.
-      XPathFactory.newInstance().newXPath().
-        evaluate(expression, doc, javax.xml.xpath.XPathConstants.NODESET);
+        return Packages.javax.xml.xpath.
+          XPathFactory.newInstance().newXPath().
+            evaluate(expression, doc, javax.xml.xpath.XPathConstants.NODESET);
+    };
+    
+    var jsonmlxslt;
+    $env.jsonml = function(xmlstring){
+        jsonmlxslt = jsonmlxslt||$env.xslt($env.xml2jsonml.toXMLString());
+        var jsonml = $env.xslttransform(jsonmlxslt, xmlstring);
+        //$env.debug('jsonml :\n'+jsonml);
+        return eval(jsonml);
+    };
+    var transformerFactory;
+    $env.xslt = function(xsltstring){
+        transformerFactory = transformerFactory||
+            Packages.javax.xml.transform.TransformerFactory.newInstance();
+        return transformerFactory.newTransformer(
+              new javax.xml.transform.dom.DOMSource(
+                  $env.parseXML(xsltstring)
+              )
+          );
+    };
+    $env.xslttransform = function(xslt, xmlstring){
+        var baos = new java.io.ByteArrayOutputStream();
+        xslt.transform(
+            new javax.xml.transform.dom.DOMSource($env.parseHTML(xmlstring)),
+            new javax.xml.transform.stream.StreamResult(baos)
+        );
+        return java.nio.charset.Charset.forName("UTF-8").
+            decode(java.nio.ByteBuffer.wrap(baos.toByteArray())).toString()+"";
     };
     
     $env.tmpdir         = java.lang.System.getProperty("java.io.tmpdir"); 
@@ -255,7 +347,10 @@
     $env.os_version     = java.lang.System.getProperty("os.version"); 
     $env.lang           = java.lang.System.getProperty("user.lang"); 
     $env.platform       = "Rhino ";//how do we get the version
-    
+
+    //injected by org.mozilla.javascript.tools.envjs.
+    $env.load = load;
+
     $env.safeScript = function(){
       //do nothing  
     };
@@ -267,10 +362,16 @@
     
     
     $env.loadInlineScript = function(script){
-        $env.debug("loading inline script :" + script.text);
         var tmpFile = $env.writeToTempFile(script.text, 'js') ;
         $env.debug("loading " + tmpFile);
-        load(tmpFile);
+        $env.load(tmpFile);
     };
+    
+    //injected by org.mozilla.javascript.tools.envjs.
+    $env.globalize = globalize;
+    $env.getScope = getScope;
+    $env.setScope = setScope;
+    $env.configureScope = configureScope;
+    $env.restoreScope = restoreScope;
     
 })(Envjs);

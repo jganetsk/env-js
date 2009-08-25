@@ -23,6 +23,10 @@ __extend__(HTMLScriptElement.prototype, {
         return this.nodeValue;
 
     },
+    set text(value){
+        this.nodeValue = value;
+        $env.loadInlineScript(this);
+    },
     get htmlFor(){
         return this.getAttribute('for');
     },
@@ -58,6 +62,9 @@ __extend__(HTMLScriptElement.prototype, {
     },
     set type(value){
         this.setAttribute('type',value);
+    },
+    onload: function(event){
+        __eval__(this.getAttribute('onload')||'', this)
     }
 });
 

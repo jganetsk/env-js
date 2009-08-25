@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Env" default="all" basedir=".">
     <description>Builds, tests, and runs the project Env.</description>
-    <property name="BUILD_MAJOR"    value="0" />
-    <property name="BUILD_MINOR"    value="9" />
-    <property name="BUILD_ID"       value="7" />
+    <tstamp/>
     
     <property name="SRC_DIR"        
             location="src"           
@@ -28,6 +26,9 @@
             location="${PREFIX}/"             
             description="Folder for concatenated, min, lite and packed target" />
 
+    
+    <property file="build.properties"/>
+    
     <!-- Files names for distribution -->
     <property name="ENV_DIST"  
             location="${DIST_DIR}/env.${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_ID}.js" />
@@ -40,12 +41,21 @@
     
     <!-- BUILD TARGETS -->
     <target name="all" depends="concat,test"/>
-    
+    <target name="rhino">
+        <ant antfile="rhino/build.xml" target="all" inheritAll="false"/>
+    </target>
+
     <target name="concat" description="Main ENV build">
         <mkdir dir="${DIST_DIR}" />
           <!-- CORE -->
         <echo message="Building ${ENV_DIST}" />
         <concat destfile="${ENV_DIST}">
+            <filterchain>    
+                <replacetokens>
+                    <token key="VERSION" value="${BUILD}"/>
+                </replacetokens>
+            </filterchain>
+            <fileset dir="${SRC_DIR}" includes="build.js" />
             <fileset dir="${SRC_DIR}" includes="intro.js" />
             <fileset dir="${SRC_DIR}" includes="window/window.js" />
             <fileset dir="${SRC_DIR}" includes="platform/xmlsax.js" />
@@ -78,9 +88,11 @@
             <fileset dir="${SRC_DIR}" includes="html/area.js" />
             <fileset dir="${SRC_DIR}" includes="html/base.js" />
             <fileset dir="${SRC_DIR}" includes="html/blockquote-q.js" />
+            <fileset dir="${SRC_DIR}" includes="html/body.js" />
             <fileset dir="${SRC_DIR}" includes="html/button.js" />
             <fileset dir="${SRC_DIR}" includes="html/col-colgroup.js" />
             <fileset dir="${SRC_DIR}" includes="html/del-ins.js" />
+            <fileset dir="${SRC_DIR}" includes="html/div.js" />
             <fileset dir="${SRC_DIR}" includes="html/fieldset.js" />
             <fileset dir="${SRC_DIR}" includes="html/form.js" />
             <fileset dir="${SRC_DIR}" includes="html/frame.js" />
@@ -105,6 +117,7 @@
             <fileset dir="${SRC_DIR}" includes="html/table.js" />
             <fileset dir="${SRC_DIR}" includes="html/tbody-thead-tfoot.js" />
             <fileset dir="${SRC_DIR}" includes="html/td-th.js" />
+            <fileset dir="${SRC_DIR}" includes="html/textarea.js" />
             <fileset dir="${SRC_DIR}" includes="html/title.js" />
             <fileset dir="${SRC_DIR}" includes="html/tr.js" />
             <fileset dir="${SRC_DIR}" includes="serializer/xml.js" />
@@ -138,6 +151,12 @@
         <!-- RHINO -->
         <echo message="Building ${ENV_RHINO}" />
         <concat destfile="${ENV_RHINO}">
+            <filterchain>    
+                <replacetokens>
+                    <token key="VERSION" value="${BUILD}"/>
+                </replacetokens>
+            </filterchain>
+            <fileset dir="${SRC_DIR}"  includes="build.js" />
             <fileset dir="${SRC_DIR}"  includes="platform/core.js" />
             <fileset dir="${SRC_DIR}"  includes="platform/rhino.js" />
             <fileset dir="${DIST_DIR}" includes="env.js" />
@@ -147,7 +166,7 @@
     </target>
     
     <target name="test" description="Run the tests">
-      <java fork="true" jar="rhino/js.jar" failonerror="true">
+      <java fork="true" jar="${DIST_DIR}/env-js.jar" failonerror="true">
         <arg value="test/test.js"/>
         <jvmarg value="-Dfile.encoding=utf-8"/>
       </java>

@@ -55,21 +55,25 @@ __extend__(HTMLFrameElement.prototype, {
     },
     set src(value){
         this.setAttribute('src', value);
+
+        if (value && value.length > 0){
+            $env.loadFrame(this, $env.location(value));
+            
+            var event = document.createEvent();
+            event.initEvent("load");
+            this.dispatchEvent( event, false );
+        }
     },
     get contentDocument(){
-        $debug("getting content document for (i)frame");
-        if(!this._content){
-            this._content = new HTMLDocument($implementation);
-            if(this.src.length > 0){
-                $info("Loading frame content from " + this.src);
-                try{
-                    this._content.load(this.src);
-                }catch(e){
-                    $error("failed to load frame content: from " + this.src, e);
-                }
-            }
-        }
+        if (!this._content)
+            return null;
+        return this._content.document;
+    },
+    get contentWindow(){
         return this._content;
+    },
+    onload: function(event){
+        __eval__(this.getAttribute('onload')||'', this)
     }
 });
 

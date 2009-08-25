@@ -1,4 +1,4 @@
-$debug("Defining MouseEvent");
+$debug("Defining UiEvent");
 /*
 *	uievent.js
 */

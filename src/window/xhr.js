@@ -23,7 +23,6 @@ XMLHttpRequest.prototype = {
 	setRequestHeader: function(header, value){
 		this.headers[header] = value;
 	},
-	getResponseHeader: function(header){ },
 	send: function(data){
 		var _this = this;
 		
@@ -40,10 +39,21 @@ XMLHttpRequest.prototype = {
         					    $debug("parsing response text into xml document");
         						responseXML = $domparser.parseFromString(_this.responseText+"");
                                 return responseXML;
-        					} catch(e) { return null;/*TODO: need to flag an error here*/}
+        					} catch(e) { 
+                                $error('response XML does not apear to be well formed xml', e);
+        						responseXML = $domparser.parseFromString("<html>"+
+                                    "<head/><body><p> parse error </p></body></html>");
+                                return responseXML;
+                            }
       					}
-      				}else{return null;}
+      				}else{
+                        $env.warn('response XML does not apear to be xml');
+                        return null;
+                    }
       			});
+                _this.__defineSetter__("responseXML",function(xml){
+                    responseXML = xml;
+                });
 			}, data);
 			_this.onreadystatechange();
 		}
@@ -62,6 +72,7 @@ XMLHttpRequest.prototype = {
 		//TODO
 	},
 	getResponseHeader: function(header){
+        $debug('GETTING RESPONSE HEADER '+header);
 	  var rHeader, returnedHeaders;
 		if (this.readyState < 3){
 			throw new Error("INVALID_STATE_ERR");
@@ -71,8 +82,13 @@ XMLHttpRequest.prototype = {
 				if (rHeader.match(new RegExp(header, "i")))
 					returnedHeaders.push(this.responseHeaders[rHeader]);
 			}
-			if (returnedHeaders.length){ return returnedHeaders.join(", "); }
-		}return null;
+            
+			if (returnedHeaders.length){ 
+                $debug('GOT RESPONSE HEADER '+returnedHeaders.join(", "));
+                return returnedHeaders.join(", "); 
+            }
+		}
+        return null;
 	},
 	getAllResponseHeaders: function(){
 	  var header, returnedHeaders = [];

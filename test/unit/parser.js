@@ -1,6 +1,7 @@
 // environment mocking for parser
 $w = { }
 $env = { debug: function() {} }
+$parentWindow = $initTop = null;
 
 load("src/window/window.js", "src/dom/parser.js", "src/dom/entities.js");
 
@@ -89,3 +90,23 @@ test("Toggle entity replacement", function() {
     equals(XMLP._ELM_E, p.next(), "Closing body tag"); // _ELM_E </body>
     equals(XMLP._ELM_E, p.next(), "Closing html tag"); // _ELM_E </html>
 });
+
+/*test("Clean HTML", function() {
+    expect(3);
+    var domParser = new DOMParser(),
+    	htmlstr = "<div><p>this is a pig... &apos;oink! oink!&apos;</div>";
+        
+    Envjs.fixHTML = true;
+    equals(Envjs.cleanHTML(htmlstr), 
+        "<div><p>this is a pig... 'oink! oink!'</p></div>",
+        'got expected xmlstring');
+        
+    
+    var domnode = domParser.parseFromString(htmlstr);
+    ok(domnode, 'Malformed p was parsed without error');
+    equals(domnode.xml, 
+        "<div><p>this is a pig... 'oink! oink!'</p></div>",
+        'got expected value for .xml');
+    Envjs.fixHTML = false;
+
+});*/

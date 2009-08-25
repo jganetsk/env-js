@@ -18,6 +18,18 @@
 5) Note the date and your email here.
 
 
+== 2009-08-18: thatcher.christopher@gmail.com ==
+(ran against github.com/thatcher/env-js)
+
+jQuery 1.3.2:
+* 1346 tests of 1471 passed, 125 failed.
+
+== 2009-08-18: thatcher.christopher@gmail.com ==
+(ran against github.com/thatcher/env-js)
+
+jQuery 1.3.2:
+* 1308 tests of 1472 passed, 164 failed.
+
 == 2009-05-08: larry.karnowski@gmail.com ==
 (ran against github.com/thatcher/env-js)
 

@@ -19,7 +19,7 @@ var DOMNode = function(ownerDocument) {
 
   this.nodeName = "";                            // The name of this node
   this.nodeValue = null;                           // The value of this node
-  this.className = "";                           // The CSS class name of this node.
+  //this.className = "";                           // The CSS class name of this node.
   
   // The parent of this node. All nodes, except Document, DocumentFragment, and Attr may have a parent.
   // However, if a node has just been created and not yet added to the tree, or if it has been removed from the tree, this is null
@@ -68,8 +68,12 @@ __extend__(DOMNode.prototype, {
     insertBefore : function(newChild, refChild) {
         var prevNode;
         
-        if(newChild==null || refChild==null){
+        if(newChild==null){
             return newChild;
+        }
+        if(refChild==null){
+            this.appendChild(newChild);
+            return this.newChild;
         }
         
         // test for exceptions
@@ -93,7 +97,6 @@ __extend__(DOMNode.prototype, {
         if (refChild) {                                // if refChild is specified, insert before it
             // find index of refChild
             var itemIndex = __findItemIndex__(this.childNodes, refChild._id);
-            
             // throw Exception if there is no child node with this id
             if (__ownerDocument__(this).implementation.errorChecking && (itemIndex < 0)) {
               throw(new DOMException(DOMException.NOT_FOUND_ERR));
@@ -107,8 +110,7 @@ __extend__(DOMNode.prototype, {
             }
             
             // insert newChild into childNodes
-            __insertBefore__(this.childNodes, newChild, 
-                __findItemIndex__(this.childNodes, refChild._id));
+            __insertBefore__(this.childNodes, newChild, itemIndex);
             
             // do node pointer surgery
             prevNode = refChild.previousSibling;
@@ -128,6 +130,7 @@ __extend__(DOMNode.prototype, {
                 newChild.parentNode = this;                // set the parentNode of the newChild
                 refChild.previousSibling = newChild;       // link refChild to newChild
             }
+            
         }else {                                         // otherwise, append to end
             prevNode = this.lastChild;
             this.appendChild(newChild);

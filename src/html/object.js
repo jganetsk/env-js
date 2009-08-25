@@ -56,12 +56,12 @@ __extend__(HTMLObjectElement.prototype, {
     set standby(value){
         this.setAttribute('standby',value);
     },
-    get tabIndex(){
+    /*get tabIndex(){
         return this.getAttribute('tabindex');
     },
     set tabIndex(value){
         this.setAttribute('tabindex',value);
-    },
+    },*/
     get type(){
         return this.getAttribute('type');
     },

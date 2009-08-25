@@ -60,12 +60,12 @@ __extend__(DOMNamedNodeMap.prototype, {
               throw(new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR));
             } else {
               this[itemIndex] = arg;                // over-write existing NamedNode
-              this[arg.name] = arg;
+              this[arg.name.toLowerCase()] = arg;
             }
       } else {
             // add new NamedNode
             Array.prototype.push.apply(this, [arg]);
-            this[arg.name] = arg;
+            this[arg.name.toLowerCase()] = arg;
       }
     
       arg.ownerElement = this.parentNode;            // update ownerElement
@@ -213,12 +213,12 @@ var __findNamedItemIndex__ = function(namednodemap, name, isnsmap) {
   for (var i=0; i<namednodemap.length; i++) {
     // compare name to each node's nodeName
     if(isnsmap){
-        if (namednodemap[i].localName == localName) {         // found it!
+        if (namednodemap[i].localName.toLowerCase() == name.toLowerCase()) {         // found it!
           ret = i;
           break;
         }
     }else{
-        if (namednodemap[i].name == name) {         // found it!
+        if (namednodemap[i].name.toLowerCase() == name.toLowerCase()) {         // found it!
           ret = i;
           break;
         }
@@ -244,7 +244,8 @@ var __findNamedItemNSIndex__ = function(namednodemap, namespaceURI, localName) {
     // loop through all nodes
     for (var i=0; i<namednodemap.length; i++) {
       // compare name to each node's namespaceURI and localName
-      if ((namednodemap[i].namespaceURI == namespaceURI) && (namednodemap[i].localName == localName)) {
+      if ((namednodemap[i].namespaceURI.toLowerCase() == namespaceURI.toLowerCase()) && 
+          (namednodemap[i].localName.toLowerCase() == localName.toLowerCase())) {
         ret = i;                                 // found it!
         break;
       }

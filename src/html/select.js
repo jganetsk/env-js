@@ -1,10 +1,12 @@
 $debug("Defining HTMLSelectElement");
-/* 
+/*
 * HTMLSelectElement - DOM Level 2
 */
 var HTMLSelectElement = function(ownerDocument) {
     this.HTMLElement = HTMLElement;
     this.HTMLElement(ownerDocument);
+
+    this._oldIndex = -1;
 };
 HTMLSelectElement.prototype = new HTMLElement;
 __extend__(HTMLSelectElement.prototype, {
@@ -83,12 +85,12 @@ __extend__(HTMLSelectElement.prototype, {
     set size(value){
         this.setAttribute('size',value);
     },
-    get tabIndex(){
+    /*get tabIndex(){
         return Number(this.getAttribute('tabindex'));
     },
     set tabIndex(value){
         this.setAttribute('tabindex',value);
-    },
+    },*/
     add : function(){
         __add__(this);
     },
@@ -97,9 +99,19 @@ __extend__(HTMLSelectElement.prototype, {
     },
     blur: function(){
         __blur__(this);
+
+        if (this._oldIndex != this.selectedIndex){
+            var event = document.createEvent();
+            event.initEvent("change");
+            this.dispatchEvent( event );
+        }
     },
     focus: function(){
         __focus__(this);
+        this._oldIndex = this.selectedIndex;
+    },
+    onchange: function(event){
+        __eval__(this.getAttribute('onchange')||'', this)
     }
 });
 

@@ -8,9 +8,9 @@ $debug("Defining HTMLDocument");
  *
  * @extends DOMDocument
  */
-var HTMLDocument = function(implementation) {
+var HTMLDocument = function(implementation, docParentWindow) {
   this.DOMDocument = DOMDocument;
-  this.DOMDocument(implementation);
+  this.DOMDocument(implementation, docParentWindow);
 
   this._refferer = "";
   this._domain;
@@ -28,16 +28,16 @@ __extend__(HTMLDocument.prototype, {
           // create DOMElement specifying 'this' as ownerDocument
           //This is an html document so we need to use explicit interfaces per the 
           if(     tagName.match(/^A$/))                 {node = new HTMLAnchorElement(this);}
-          else if(tagName.match(/AREA/))                {node = new HTMLAreaElement(this);}
+          else if(tagName.match(/^AREA$/))              {node = new HTMLAreaElement(this);}
           else if(tagName.match(/BASE/))                {node = new HTMLBaseElement(this);}
           else if(tagName.match(/BLOCKQUOTE|Q/))        {node = new HTMLQuoteElement(this);}
-          else if(tagName.match(/BODY/))                {node = new HTMLElement(this);}
+          else if(tagName.match(/BODY/))                {node = new HTMLBodyElement(this);}
           else if(tagName.match(/BR/))                  {node = new HTMLElement(this);}
           else if(tagName.match(/BUTTON/))              {node = new HTMLButtonElement(this);}
           else if(tagName.match(/CAPTION/))             {node = new HTMLElement(this);}
           else if(tagName.match(/COL|COLGROUP/))        {node = new HTMLTableColElement(this);}
           else if(tagName.match(/DEL|INS/))             {node = new HTMLModElement(this);}
-          else if(tagName.match(/DIV/))                 {node = new HTMLElement(this);}
+          else if(tagName.match(/DIV/))                 {node = new HTMLDivElement(this);}
           else if(tagName.match(/DL/))                  {node = new HTMLElement(this);}
           else if(tagName.match(/FIELDSET/))            {node = new HTMLFieldSetElement(this);}
           else if(tagName.match(/FORM/))                {node = new HTMLFormElement(this);}
@@ -67,9 +67,9 @@ __extend__(HTMLDocument.prototype, {
           else if(tagName.match(/SELECT/))              {node = new HTMLSelectElement(this);}
           else if(tagName.match(/STYLE/))               {node = new HTMLStyleElement(this);}
           else if(tagName.match(/TABLE/))               {node = new HTMLTableElement(this);}
-          else if(tagName.match(/TBODY|TFOOT|THEAD/))   {node = new HTMLSectionElement(this);}
+          else if(tagName.match(/TBODY|TFOOT|THEAD/))   {node = new HTMLTableSectionElement(this);}
           else if(tagName.match(/TD|TH/))               {node = new HTMLTableCellElement(this);}
-          else if(tagName.match(/TEXTAREA/))            {node = new HTMLElement(this);}
+          else if(tagName.match(/TEXTAREA/))            {node = new HTMLTextAreaElement(this);}
           else if(tagName.match(/TITLE/))               {node = new HTMLTitleElement(this);}
           else if(tagName.match(/TR/))                  {node = new HTMLTableRowElement(this);}
           else if(tagName.match(/UL/))                  {node = new HTMLElement(this);}

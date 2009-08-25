@@ -9,7 +9,7 @@ var $events = [],
     $onunload;
 
 $w.addEventListener = function(type, fn){
-  //$log("adding event listener " + type);
+    $debug("adding event listener \n\t" + type +" \n\tfor "+this+" with callback \n\t"+fn);
 	if ( !this.uuid ) {
 		this.uuid = $events.length;
 		$events[this.uuid] = {};
@@ -36,30 +36,39 @@ $w.removeEventListener = function(type, fn){
 		});
 };
 
-$w.dispatchEvent = function(event){
+$w.dispatchEvent = function(event, bubbles){
     $debug("dispatching event " + event.type);
+
     //the window scope defines the $event object, for IE(^^^) compatibility;
     $event = event;
+
+    if (bubbles == undefined || bubbles == null)
+        bubbles = true;
+
     if (!event.target) {
+        $debug("no event target : "+event.target);
         event.target = this;
     }
     $debug("event target: " + event.target);
-    if ( event.type ) {
+    if ( event.type && this.nodeType || this===window) {
+        $debug("nodeType: " + this.nodeType);
         if ( this.uuid && $events[this.uuid][event.type] ) {
             var _this = this;
             $events[this.uuid][event.type].forEach(function(fn){
                 $debug('calling event handler '+fn+' on target '+_this);
-                fn.call( _this, event );
+                fn( event );
             });
         }
     
         if (this["on" + event.type]) {
-            $debug('calling event handler '+event.type+' on target '+this);
-            this["on" + event.type].call(_this, event);
+            $debug('calling event handler on'+event.type+' on target '+this);
+            this["on" + event.type](event);
         }
+    }else{
+        $debug("non target: " + event.target + " \n this->"+this);
     }
-    if(this.parentNode){
-        this.parentNode.dispatchEvent.call(this.parentNode,event);
+    if (bubbles && this.parentNode){
+        this.parentNode.dispatchEvent(event);
     }
 };
 	

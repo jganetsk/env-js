@@ -50,6 +50,8 @@ __extend__(HTMLOptionElement.prototype, {
         return (this.getAttribute('selected')=='selected');
     },
     set selected(value){
+        if(this.defaultSelected===null&&this.selected!==null)
+            this.defaultSelected = this.selected;
         this.setAttribute('selected', (value ? 'selected' :''));
     },
     get value(){

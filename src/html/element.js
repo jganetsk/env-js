@@ -11,11 +11,10 @@ var HTMLElement = function(ownerDocument) {
 HTMLElement.prototype = new DOMElement;
 __extend__(HTMLElement.prototype, {
 		get className() { 
-		    return this.getAttribute("class")||""; 
-		    
+		    return this.getAttribute("class")||''; 
 	    },
-		set className(val) { 
-		    return this.setAttribute("class",trim(val)); 
+		set className(value) { 
+		    return this.setAttribute("class",trim(value)); 
 		    
 	    },
 		get dir() { 
@@ -27,7 +26,7 @@ __extend__(HTMLElement.prototype, {
 		    
 	    },
 		get id(){  
-		    return this.getAttribute('id')||''; 
+		    return this.getAttribute('id'); 
 		    
 	    },
 		set id(id){  
@@ -39,8 +38,8 @@ __extend__(HTMLElement.prototype, {
 		    
 	    },
 		set innerHTML(html){
-		    //$debug("htmlElement.innerHTML("+html+")");
 		    //Should be replaced with HTMLPARSER usage
+            //$debug('SETTING INNER HTML ('+this+'+'+html.substring(0,64));
 		    var doc = new DOMParser().
 			  parseFromString('<div>'+html+'</div>');
             var parent = doc.documentElement;
@@ -57,7 +56,7 @@ __extend__(HTMLElement.prototype, {
 		    doc = null;
 		},
 		get lang() { 
-		    return this.getAttribute("lang")||""; 
+		    return this.getAttribute("lang"); 
 		    
 	    },
 		set lang(val) { 
@@ -86,33 +85,39 @@ __extend__(HTMLElement.prototype, {
 		scrollRight: 0,
 		get style(){
 		    if(this.$css2props === null){
-		        this.updateCss2Props();
+	            this.$css2props = new CSS2Properties(this);
 	        }
-	        return this.$css2props
+	        return this.$css2props;
 		},
-		updateCss2Props: function() {
-			this.$css2props = new CSS2Properties({
-				onSet: (function(that) {
-					return function() { that.__setAttribute("style", this.cssText); }
-				})(this),
-				cssText:this.getAttribute("style")
-			});
-		},
-		__setAttribute: HTMLElement.prototype.setAttribute,
+        set style(values){
+		    __updateCss2Props__(this, values);
+        },
 		setAttribute: function (name, value) {
-		    this.__setAttribute(name, value);
+            DOMElement.prototype.setAttribute.apply(this,[name, value]);
 		    if (name === "style") {
-		        this.updateCss2Props();
+		        __updateCss2Props__(this, value);
 		    }
 		},
 		get title() { 
-		    return this.getAttribute("title")||""; 
+		    return this.getAttribute("title"); 
 		    
 	    },
-		set title(val) { 
-		    return this.setAttribute("title",val); 
+		set title(value) { 
+		    return this.setAttribute("title", value); 
 		    
 	    },
+		get tabIndex(){
+            var ti = this.getAttribute('tabindex');
+            if(ti!==null)
+                return Number(ti);
+            else
+                return 0;
+        },
+        set tabIndex(value){
+            if(value===undefined||value===null)
+                value = 0;
+            this.setAttribute('tabindex',Number(value));
+        },
 		//Not in the specs but I'll leave it here for now.
 		get outerHTML(){ 
 		    return this.xml; 
@@ -123,44 +128,74 @@ __extend__(HTMLElement.prototype, {
 	        return;
 	    
         },
+
 		onclick: function(event){
-		    __eval__(this.getAttribute('onclick')||'')
+		    __eval__(this.getAttribute('onclick')||'', this);
 	    },
+        
+
 		ondblclick: function(event){
-            __eval__(this.getAttribute('ondblclick')||'');
+            __eval__(this.getAttribute('ondblclick')||'', this);
 	    },
 		onkeydown: function(event){
-            __eval__(this.getAttribute('onkeydown')||'');
+            __eval__(this.getAttribute('onkeydown')||'', this);
 	    },
 		onkeypress: function(event){
-            __eval__(this.getAttribute('onkeypress')||'');
+            __eval__(this.getAttribute('onkeypress')||'', this);
 	    },
 		onkeyup: function(event){
-            __eval__(this.getAttribute('onkeyup')||'');
+            __eval__(this.getAttribute('onkeyup')||'', this);
 	    },
 		onmousedown: function(event){
-            __eval__(this.getAttribute('onmousedown')||'');
+            __eval__(this.getAttribute('onmousedown')||'', this);
 	    },
 		onmousemove: function(event){
-            __eval__(this.getAttribute('onmousemove')||'');
+            __eval__(this.getAttribute('onmousemove')||'', this);
 	    },
 		onmouseout: function(event){
-            __eval__(this.getAttribute('onmouseout')||'');
+            __eval__(this.getAttribute('onmouseout')||'', this);
 	    },
 		onmouseover: function(event){
-            __eval__(this.getAttribute('onmouseover')||'');
+            __eval__(this.getAttribute('onmouseover')||'', this);
 	    },
 		onmouseup: function(event){
-            __eval__(this.getAttribute('onmouseup')||'');
+            __eval__(this.getAttribute('onmouseup')||'', this);
 	    }
 });
 
-var __eval__ = function(script){
+var __eval__ = function(script, startingNode){
+    if (script == "")
+        return;                    // don't assemble environment if no script...
+
     try{
-        eval(script);
+        var doEval = function(scriptText){
+            eval(scriptText);
+        }
+
+        var listOfScopes = [];
+        for (var node = startingNode; node != null; node = node.parentNode)
+            listOfScopes.push(node);
+        listOfScopes.push(window);
+
+
+        var oldScopesArray = $env.configureScope(
+          doEval,        // the function whose scope chain to change
+          listOfScopes); // last array element is "head" of new chain
+        doEval.call(startingNode, script);
+        $env.restoreScope(oldScopesArray);
+                         // oldScopesArray is N-element array of two-element
+                         // arrays.  First element is JS object whose scope
+                         // was modified, second is original value to restore.
     }catch(e){
         $error(e);
     }
+};
+
+var __updateCss2Props__ = function(elem, values){
+    if(elem.$css2props === null){
+        elem.$css2props = new CSS2Properties(elem);
+    }
+    __cssTextToStyles__(elem.$css2props, values);
 };
 
 var __registerEventAttrs__ = function(elm){
@@ -197,13 +232,14 @@ var __registerEventAttrs__ = function(elm){
     return elm;
 };
 	
-var __click__ = function(element){
-	var event = new Event({
-	  target:element,
-	  currentTarget:element
-	});
-	event.initEvent("click");
-	element.dispatchEvent(event);
+// non-ECMA function, but no other way for click events to enter env.js
+var  __click__ = function(element){
+    var event = new Event({
+      target:element,
+      currentTarget:element
+    });
+    event.initEvent("click");
+    element.dispatchEvent(event);
 };
 var __submit__ = function(element){
 	var event = new Event({

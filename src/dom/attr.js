@@ -36,13 +36,16 @@ __extend__(DOMAttr.prototype, {
         this.nodeValue = value;
     },
     get specified(){
-        return (this.value.length > 0);
+        return (this!==null&&this!=undefined);
     },
     get nodeType(){
         return DOMNode.ATTRIBUTE_NODE;
     },
     get xml(){
-        return this.nodeName + '="' + __escapeXML__(this.nodeValue) + '" ';
+        if(this.nodeValue)
+            return this.nodeName + '="' + __escapeXML__(this.nodeValue) + '" ';
+        else
+            return '';
     },
     toString : function(){
         return "Attr #" + this._id + " " + this.name;

@@ -2,7 +2,6 @@
 *	history.js
 */
 
-    $info("Initializing Window History.");
 	$currentHistoryIndex = 0;
 	$history = [];
 	

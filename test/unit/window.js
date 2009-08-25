@@ -1,7 +1,7 @@
 module("window");
 
 test("Window Global Scope Equivalence", function() {
-	expect(5);
+	expect(7);
 	
 	window.foo = "abc";
 	ok( window.foo == foo, "Property created on the window is available in global scope." );
@@ -17,17 +17,25 @@ test("Window Global Scope Equivalence", function() {
 	ok( $$$$$ === "12345", "Property is in global scope." );
 	ok( window.$$$$$ === "12345", "Property is in window scope." );
     
+    try{ ok(window.Math === Math,
+        "'window' object provides common global object facilities");
+    }catch(e){print(e);}
+    try{ ok(Math.sqrt(4) == 2,
+        "'window' provides Math.* when referenced implicitly/global");
+    }catch(e){print(e);}
 });
 
 
-test("Window scope in iframe isolated", function() {
-    expect(1);
+test("References to the window object", function() {
+    expect(3);
 
-    // test cases here rely on JS in ../html/iframe.html
-    var idoc = document.getElementById('loadediframe').contentDocument;
-    var mtch = idoc.title.match(/IFRAME/);
-	try{ok (mtch && mtch.length > 0,
-            "Can get 'document' object from test iframe");
-        }catch(e){print(e);}
+    try{ ok(window == window.window,
+        "'window' is property of the window object");
+    }catch(e){print(e);}
+    try{ ok(window == self,
+        "'self' refers to the current window");
+    }catch(e){print(e);}
+    try{ ok(window == window.top,
+        "for top-level document 'window.top' refers to itself");
+    }catch(e){print(e);}
 });
-

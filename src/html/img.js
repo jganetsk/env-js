@@ -43,12 +43,19 @@ __extend__(HTMLImageElement.prototype, {
     },
     set src(value){
         this.setAttribute('src', value);
+
+        var event = document.createEvent();
+        event.initEvent("load");
+        this.dispatchEvent( event, false );
     },
     get width(){
         return this.getAttribute('width');
     },
     set width(value){
         this.setAttribute('width', value);
+    },
+    onload: function(event){
+        __eval__(this.getAttribute('onload')||'', this)
     }
 });
 

@@ -1,4 +1,4 @@
-JAR = java -jar rhino/js.jar
+JAR = java -jar dist/env-js.jar
 
 test-rhino:
 	ant -emacs test

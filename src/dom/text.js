@@ -64,6 +64,7 @@ __extend__(DOMText.prototype,{
     },
     get xml(){
         return __escapeXML__(""+ this.nodeValue);
+        //return ""+ this.nodeValue;
     },
     toString: function(){
         return "Text #" + this._id;    

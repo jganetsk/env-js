@@ -31,7 +31,8 @@ var $defaultStatus = "Done";
 var $event = null;
 
 //A read-only array of window objects
-var $frames = [];
+//var $frames = [];    // TODO: since window.frames can be accessed like a
+                       //   hash, will need an object to really implement
 
 // a read-only reference to the History object
 /**>  $history - see location.js <**/
@@ -42,9 +43,9 @@ var $innerHeight = 600, $innerWidth = 800;
 // a read-only reference to the Location object.  the location object does expose read/write properties
 /**> $location - see location.js <**/
 
-// a read only property specifying the name of the window.  Can be set when using open()
-// and may be used when specifying the target attribute of links
-var $name = 'Resig Env Browser';
+// The name of window/frame.  Set directly, when using open(), or in frameset.
+// May be used when specifying the target attribute of links
+var $name;
 
 // a read-only reference to the Navigator object
 /**> $navigator - see navigator.js <**/
@@ -66,18 +67,14 @@ var $pageXOffset = 0, $pageYOffset = 0;
 //A read-only reference to the Window object that contains this window or frame.  If the window is
 // a top-level window, parent refers to the window itself.  If this window is a frame, this property
 // refers to the window or frame that conatins it.
-var $parent;
+var $parent = $parentWindow;
 
 // a read-only refernce to the Screen object that specifies information about the screen: 
 // the number of available pixels and the number of available colors.
 /**> $screen - see screen.js <**/
-
 // read only properties that specify the coordinates of the upper-left corner of the screen.
 var $screenX = 0, $screenY = 0;
 var $screenLeft = $screenX, $screenTop = $screenY;
-
-// a read-only refernce to this window itself.
-var $self;
 
 // a read/write string that specifies the current contents of the status line.
 var $status = '';
@@ -85,9 +82,9 @@ var $status = '';
 // a read-only reference to the top-level window that contains this window.  If this
 // window is a top-level window it is simply a refernce to itself.  If this window 
 // is a frame, the top property refers to the top-level window that contains the frame.
-var $top;
+var $top = $initTop;
 
-// the window property is identical to the self property.
+// the window property is identical to the self property and to this obj
 var $window = $w;
 
 $debug("Initializing Window.");
@@ -97,7 +94,10 @@ __extend__($w,{
   set defaultStatus(_defaultStatus){$defaultStatus = _defaultStatus;},
   //get document(){return $document;}, - see document.js
   get event(){return $event;},
-  get frames(){return $frames;},
+
+  get frames(){return undefined;}, // TODO: not yet any code to maintain list
+  get length(){return undefined;}, //   should be frames.length, but.... TODO
+
   //get history(){return $history;}, - see location.js
   get innerHeight(){return $innerHeight;},
   get innerWidth(){return $innerWidth;},
@@ -105,6 +105,7 @@ __extend__($w,{
   get clientWidth(){return $innerWidth;},
   //get location(){return $location;}, see location.js
   get name(){return $name;},
+  set name(newName){ $name = newName; },
   //get navigator(){return $navigator;}, see navigator.js
   get opener(){return $opener;},
   get outerHeight(){return $outerHeight;},
@@ -117,7 +118,7 @@ __extend__($w,{
   get screenTop(){return $screenTop;},
   get screenX(){return $screenX;},
   get screenY(){return $screenY;},
-  get self(){return $self;},
+  get self(){return $window;},
   get status(){return $status;},
   set status(_status){$status = _status;},
   get top(){return $top || $window;},
@@ -125,11 +126,11 @@ __extend__($w,{
 });
 
 $w.open = function(url, name, features, replace){
-  //TODO
+  //TODO.  Remember to set $opener, $name
 };
 
 $w.close = function(){
-  //TODO
+  //TODO.  Remember to set $closed
 };     
   
 /* Time related functions - see timer.js

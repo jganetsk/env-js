@@ -16,10 +16,6 @@ load("dist/env.rhino.js");
 window.onload = function(){
   print("Handling onload for test.js");
 
-  // env.js doesn't load IFRAMEs until their content is referenced, so...
-  document.getElementById('loadediframe').contentDocument;
-  print("Forced loading of iframe in test page.");
-
   // Load the test runner
   load("test/testrunner.js");
   print("Loaded test runner.");
@@ -30,6 +26,10 @@ window.onload = function(){
   load(
     "test/unit/dom.js",
     "test/unit/window.js",
+    "test/unit/onload.js",
+    "test/unit/scope.js",     // must come before frame.js changes page content
+    "test/unit/frame.js",
+    "test/unit/events.js",
     "test/unit/parser.js",
     "test/unit/timer.js",
     //NOTE: keep this test last because Prototype pollutes

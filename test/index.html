@@ -3,7 +3,20 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>jQuery Test Suite</title>
-	<link rel="Stylesheet" media="screen" href="data/testsuite.css" />
+
+    <script>
+        function testLinkOnload(){
+            var t = document.createTextNode(
+              '#styleCreatedByLinkOnloadEvent { color: red; }');
+            var s = document.createElement('style');
+            s.setAttribute('id', 'sCreatedByLinkOnload');
+            s.appendChild(t);
+            document.getElementsByTagName('head')[0].appendChild(s);
+        }
+    </script>
+    <link rel="Stylesheet" media="screen" href="data/testsuite.css"
+              onload="testLinkOnload();" />
+
 	<script>var jQuery = "jQuery", $ = "$"; // For testing .noConflict()</script>
 	<script type="text/javascript" src="../dist/jquery.js"></script>
 	<script type="text/javascript" src="data/testrunner.js"></script>
@@ -24,8 +37,77 @@
 	<div id="nothiddendiv" style="height:1px;background:white;">
 		<div id="nothiddendivchild"></div>
 	</div>
+
 	<!-- this iframe is outside the #main so it won't reload constantly wasting time, but it means the tests must be "safe" and clean up after themselves -->
-	<iframe id="loadediframe" name="loadediframe" style="display:none;" src="html/iframe.html"></iframe>
+    <iframe id="loadediframe" name="loadediframe" style="display:none;"
+            src="html/iframe1.html">
+        <script>
+            // kind of a cheat--env.js isn't smart enough to choose between
+            //   either loading from 'src' or parsing its content, so it
+            //   does both, which is exploited here to ensure that the
+            //   onload handler is installed before env.js "finishes
+            //   loading" (which happens when the /iframe tag is parsed
+            var iframeElem = document.getElementById('loadediframe');
+            iframeElem.onload = function(){
+                var t = document.createTextNode(
+'Paragraph created by execution of iframe-onload event handler.');
+                var p = document.createElement('p');
+                p.setAttribute('id', 'pCreatedByIframeOnload');
+                p.appendChild(t);
+                iframeElem.appendChild(p);
+            }
+        </script>
+    </iframe>
+    <iframe id="emptyiframe" name="emtpyiframe" style="display:none;"></iframe>
+
+    <script>
+        eventFrameLoaded = eventFrameClicked = 0;
+        function eventOnloadHandler(){  eventFrameLoaded  += 1;}
+        function eventOnclickHandler(){ eventFrameClicked += 1;}
+    </script>
+    <iframe id="eventsFrame" name="eventsFrame" src="html/events.html"
+            onload="eventOnloadHandler();" onclick="eventOnclickHandler()";
+    ></iframe>
+    <iframe id="scopeFrame" name="scopeFrame" src="html/scope.html"></iframe>
+
+    <script>
+        function imgOnloadEventHandler(){
+            var t = document.createTextNode(
+'Paragraph created by execution of img-onload event handler.');
+            var p = document.createElement('p');
+            p.setAttribute('id', 'pCreatedByImgOnload');
+            p.appendChild(t);
+            document.getElementsByTagName('body')[0].appendChild(p);
+        }
+    </script>
+    <img id="anImg" src="html/img1.png" onload="imgOnloadEventHandler();" />
+
+    <script>
+        function onloadHandlerThatShouldntExecute(){
+            var t = document.createTextNode(
+'Paragraph created by execution of script-onload *BAD* event handler.');
+            var p = document.createElement('p');
+            p.setAttribute('id', 'pShouldntBeCreated');
+            p.appendChild(t);
+            document.getElementsByTagName('body')[0].appendChild(p);
+        }
+    </script>
+    <script onload="onloadHandlerThatShouldntExecute();">
+        function scriptOnloadEventHandler(tag){
+            var t = document.createTextNode(
+'Paragraph created by execution of script-onload event handler.');
+            var p = document.createElement('p');
+            p.setAttribute('id', 'pCreatedByScriptOnload'+tag);
+            p.appendChild(t);
+            document.getElementsByTagName('body')[0].appendChild(p);
+        }
+    </script>
+    <script src="html/missingScript.js"
+            onload="scriptOnloadEventHandler('A');" />
+    <script src="html/missingScript.js"
+            onload="scriptOnloadEventHandler('B');"></script>
+
+
 	<dl id="dl" style="display:none;">
 	<div id="main" style="display: none;">
 		<p id="firstp">See <a id="simon1" href="http://simon.incutio.com/archive/2003/03/25/#getElementsBySelector" rel="bookmark">this blog entry</a> for more information.</p>
@@ -183,5 +265,18 @@ Z</textarea>
 	</dl>
 	
 	<ol id="tests"></ol>
+
+    <!-- test execution of main pages's body-onload tag functionality -->
+    <script>
+        var bodyElem = document.getElementsByTagName('body')[0];
+        bodyElem.onload = function(){
+            var t = document.createTextNode(
+              'Look, a dynamically-generated paragraph!');
+            var p = document.createElement('p');
+            p.setAttribute('id', 'pCreatedByBodyOnload');
+            p.appendChild(t);
+            bodyElem.appendChild(p);
+        }
+    </script>
 </body>
 </html>

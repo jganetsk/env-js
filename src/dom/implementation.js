@@ -11,6 +11,50 @@ var DOMImplementation = function() {
     this.namespaceAware = true;       // by default, handle namespaces
     this.errorChecking  = true;       // by default, test for exceptions
 };
+
+var __endHTMLElement__ = function(node, doc, p){
+    if(node.nodeName.toLowerCase() == 'script'){
+        p.replaceEntities = true;
+        $env.loadLocalScript(node, p);
+
+        // only fire event if we actually had something to load
+        if (node.src && node.src.length > 0){
+            var event = doc.createEvent();
+            event.initEvent("load");
+            node.dispatchEvent( event, false );
+        }
+    }
+    else if (node.nodeName.toLowerCase() == 'frame' ||
+             node.nodeName.toLowerCase() == 'iframe'   ){
+
+        if (node.src && node.src.length > 0){
+            $debug("getting content document for (i)frame from " + node.src);
+
+            $env.loadFrame(node, $env.location(node.src));
+
+            var event = doc.createEvent();
+            event.initEvent("load");
+            node.dispatchEvent( event, false );
+        }
+    }
+    else if (node.nodeName.toLowerCase() == 'link'){
+        if (node.href && node.href.length > 0){
+            // don't actually load anything, so we're "done" immediately:
+            var event = doc.createEvent();
+            event.initEvent("load");
+            node.dispatchEvent( event, false );
+        }
+    }
+    else if (node.nodeName.toLowerCase() == 'img'){
+        if (node.src && node.src.length > 0){
+            // don't actually load anything, so we're "done" immediately:
+            var event = doc.createEvent();
+            event.initEvent("load");
+            node.dispatchEvent( event, false );
+        }
+    }
+}
+
 __extend__(DOMImplementation.prototype,{
     // @param  feature : string - The package name of the feature to test.
     //      the legal only values are "XML" and "CORE" (case-insensitive).
@@ -33,7 +77,7 @@ __extend__(DOMImplementation.prototype,{
     createDocument : function(nsuri, qname, doctype){
       //TODO - this currently returns an empty doc
       //but needs to handle the args
-        return new HTMLDocument($implementation);
+        return new HTMLDocument($implementation, null);
     },
     translateErrCode : function(code) {
         //convert DOMException Code to human readable error message;
@@ -126,7 +170,8 @@ __extend__(DOMImplementation.prototype,{
  *
  * @return : DOMDocument
  */
-function __parseLoop__(impl, doc, p) {
+
+function __parseLoop__(impl, doc, p, isWindowDocument) {
     var iEvt, iNode, iAttr, strName;
     var iNodeParent = doc;
 
@@ -143,10 +188,11 @@ function __parseLoop__(impl, doc, p) {
     }
 
   // loop until SAX parser stops emitting events
+  var q = 0;
   while(true) {
     // get next event
     iEvt = p.next();
-
+    
     if (iEvt == XMLP._ELM_B) {                      // Begin-Element Event
       var pName = p.getName();                      // get the Element name
       pName = trim(pName, true, true);              // strip spaces from Element name
@@ -155,7 +201,6 @@ function __parseLoop__(impl, doc, p) {
 
       if (!impl.namespaceAware) {
         iNode = doc.createElement(p.getName());     // create the Element
-
         // add attributes to Element
         for(var i = 0; i < p.getAttributeCount(); i++) {
           strName = p.getAttributeName(i);          // get Attribute name
@@ -229,21 +274,16 @@ function __parseLoop__(impl, doc, p) {
 
       // if this is the Root Element
       if (iNodeParent.nodeType == DOMNode.DOCUMENT_NODE) {
-        iNodeParent.documentElement = iNode;        // register this Element as the Document.documentElement
+        iNodeParent._documentElement = iNode;        // register this Element as the Document.documentElement
       }
 
       iNodeParent.appendChild(iNode);               // attach Element to parentNode
       iNodeParent = iNode;                          // descend one level of the DOM Tree
     }
 
-    else if(iEvt == XMLP._ELM_E) {                  // End-Element Event
-      //handle script tag
-      if(iNodeParent.nodeName.toLowerCase() == 'script'){
-         p.replaceEntities = true;
-         $env.loadLocalScript(iNodeParent, p);
-      }
-      iNodeParent = iNodeParent.parentNode;         // ascend one level of the DOM Tree
-
+    else if(iEvt == XMLP._ELM_E) {                  // End-Element Event        
+        __endHTMLElement__(iNodeParent, doc, p);
+        iNodeParent = iNodeParent.parentNode;         // ascend one level of the DOM Tree
     }
 
     else if(iEvt == XMLP._ELM_EMP) {                // Empty Element Event
@@ -326,9 +366,10 @@ function __parseLoop__(impl, doc, p) {
 
       // if this is the Root Element
       if (iNodeParent.nodeType == DOMNode.DOCUMENT_NODE) {
-        iNodeParent.documentElement = iNode;        // register this Element as the Document.documentElement
+        iNodeParent._documentElement = iNode;        // register this Element as the Document.documentElement
       }
 
+      __endHTMLElement__(iNode, doc, p);
       iNodeParent.appendChild(iNode);               // attach Element to parentNode
     }
     else if(iEvt == XMLP._TEXT || iEvt == XMLP._ENTITY) {                   // TextNode and entity Events

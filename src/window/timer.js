@@ -9,28 +9,15 @@ $debug("Initializing Window Timer.");
 var $timers = [];
 
 window.setTimeout = function(fn, time){
-	var num = $timers.length+1;
-	var tfn;
-	
-    if (typeof fn == 'string') {
-        tfn = function() { 
-            eval(fn); 
-			window.clearInterval(num);
-        }; 
-    } else {
-		tfn = function() {
-			fn();
-			window.clearInterval(num);
-		}
-	}
-	$debug("Creating timer number "+num);
-    $timers[num] = new $env.timer(tfn, time);
-    $timers[num].start();
-	return num;
+  var num;
+  return num = window.setInterval(function(){
+    fn();
+    window.clearInterval(num);
+  }, time);
 };
 
 window.setInterval = function(fn, time){
-	var num = $timers.length+1;
+	var num = $timers.length;
 	
     if (typeof fn == 'string') {
         var fnstr = fn; 
@@ -41,7 +28,7 @@ window.setInterval = function(fn, time){
 	if(time===0){
 	    fn();
 	}else{
-	    $debug("Creating timer number "+num);
+	    //$debug("Creating timer number "+num);
     	$timers[num] = new $env.timer(fn, time);
     	$timers[num].start();
 	}
@@ -49,12 +36,11 @@ window.setInterval = function(fn, time){
 };
 
 window.clearInterval = window.clearTimeout = function(num){
+	//$log("clearing interval "+num);
 	if ( $timers[num] ) {
 	    
-	    $debug("Deleting timer number "+num);
 		$timers[num].stop();
 		delete $timers[num];
 	}
 };	
 	
-window.$wait = function(wait){ $env.wait(wait); }

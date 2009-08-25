@@ -9,7 +9,7 @@ $debug("Defining Element");
 var DOMElement = function(ownerDocument) {
     this.DOMNode  = DOMNode;
     this.DOMNode(ownerDocument);                   
-    this.id = "";                                  // the ID of the element
+    //this.id = null;                                  // the ID of the element
 };
 DOMElement.prototype = new DOMNode;
 __extend__(DOMElement.prototype, {	
@@ -30,17 +30,17 @@ __extend__(DOMElement.prototype, {
         if (attr) {
             ret = attr.value;
         }
-        return ret; // if Attribute exists, return its value, otherwise, return ""
+        return ret; // if Attribute exists, return its value, otherwise, return null
     },
     setAttribute : function (name, value) {
         // if attribute exists, use it
         var attr = this.attributes.getNamedItem(name);
-        var value = value+'';
+        
         //I had to add this check becuase as the script initializes
         //the id may be set in the constructor, and the html element
         //overrides the id property with a getter/setter.
         if(__ownerDocument__(this)){
-            if (!attr) {
+            if (attr===null||attr===undefined) {
                 attr = __ownerDocument__(this).createAttribute(name);  // otherwise create it
             }
             
@@ -58,15 +58,17 @@ __extend__(DOMElement.prototype, {
                 }
             }
             
-            if (__isIdDeclaration__(name)) {
-            //    this.id = value;  // cache ID for getElementById()
-            }
+            /*if (__isIdDeclaration__(name)) {
+                this.id = value;  // cache ID for getElementById()
+            }*/
             
             // assign values to properties (and aliases)
             attr.value     = value;
             
             // add/replace Attribute in NamedNodeMap
             this.attributes.setNamedItem(attr);
+        }else{
+            $warn('Element has no owner document '+this.tagName+'\n\t cant set attribute ' + name + ' = '+value );
         }
     },
     removeAttribute : function removeAttribute(name) {

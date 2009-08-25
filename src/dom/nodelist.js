@@ -92,8 +92,7 @@ var __findItemIndex__ = function (nodelist, id) {
  * @param  refChildIndex : int     - the array index to insert the Node before
  */
 var __insertBefore__ = function(nodelist, newChild, refChildIndex) {
-    if ((refChildIndex >= 0) && (refChildIndex < nodelist.length)) { // bounds check
-        
+    if ((refChildIndex >= 0) && (refChildIndex <= nodelist.length)) { // bounds check
         if (newChild.nodeType == DOMNode.DOCUMENT_FRAGMENT_NODE) {  // node is a DocumentFragment
             // append the children of DocumentFragment
             Array.prototype.splice.apply(nodelist,[refChildIndex, 0].concat(newChild.childNodes.toArray()));

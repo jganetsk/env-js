@@ -27,7 +27,7 @@ if [ ! -d "$JQUERY_DIR" ]; then
 fi
 
 cp dist/env.rhino.js $JQUERY_DIR/build/runtest/env.js
-cp rhino/js.jar $JQUERY_DIR/build/js.jar
+cp dist/env-js.jar $JQUERY_DIR/build/js.jar
 cp bin/jquery-$VERSION-test.js $JQUERY_DIR/build/runtest/test.js
 
 if [ $DEBUG -eq 1 ]; then
@@ -35,7 +35,7 @@ if [ $DEBUG -eq 1 ]; then
     perl -pi~ -e "s/^JAR(.*)(-jar.*|-cp.*)/JAR\1 -cp \\$\{BUILD_DIR}\/js.jar org.mozilla.javascript.tools.debugger.Main/" $JQUERY_DIR/Makefile;
 else
     echo 'running with rhino'
-    perl -pi~ -e "s/^JAR(.*)(-jar.*|-cp.*)/JAR\1 -jar \\$\{BUILD_DIR}\/js.jar -w -debug/" $JQUERY_DIR/Makefile;
+    perl -pi~ -e "s/^JAR(.*)(-jar.*|-cp.*)/JAR\1 -cp \\$\{BUILD_DIR}\/js.jar org.mozilla.javascript.tools.envjs.Main/" $JQUERY_DIR/Makefile;
 fi
 
 cd $JQUERY_DIR

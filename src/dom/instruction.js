@@ -31,6 +31,12 @@ __extend__(DOMProcessingInstruction.prototype, {
       // The content of this processing instruction.
         return this.nodeName;
     },
+    set target(value){
+      // The target of this processing instruction.
+      // XML defines this as being the first token following the markup that begins the processing instruction.
+      // The content of this processing instruction.
+        this.nodeName = value;
+    },
     get nodeType(){
         return DOMNode.PROCESSING_INSTRUCTION_NODE;
     },
